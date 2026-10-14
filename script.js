@@ -146,99 +146,55 @@ async function getMoveDetails(moveObj) {
 async function getFinalMoves(format, types, stats, moves) {
     console.log(types, format, stats);
     const atkFilters = [];
-    const finalMoves = [];
+    const finalMoves = {};
+    const selectedMoveNames = new Set();
 
     console.log('Generating Final Moveset');
     if (stats.primary.includes("atk")) atkFilters.push('physical');
     if (stats.primary.includes("spAtk")) atkFilters.push('special');
     if (atkFilters.length === 0) atkFilters.push('physical', 'special');
-    
-    if (format.includes('highSTAB')) {
-        let viableMoves = []
+
+    const getStrongestAvailableMoves = predicate => {
+        let strongestMoves = [];
 
         for (const atkFilter of atkFilters) {
-            const filterMoves = moves[atkFilter].filter(move => types.includes(move.type));
+            const availableMoves = moves[atkFilter].filter(move =>
+                !selectedMoveNames.has(move.moveName) && predicate(move)
+            );
 
-            for (const move of filterMoves) {
-                if (viableMoves.length === 0) viableMoves.push(move);
-                else {
-                    if (viableMoves[0].power < move.power) {
-                        viableMoves = [];
-                        viableMoves.push(move);
-                    } else if (viableMoves[0].power === move.power) {
-                        viableMoves.push(move);
-                    }
+            for (const move of availableMoves) {
+                if (strongestMoves.length === 0 || strongestMoves[0].power < move.power) {
+                    strongestMoves = [move];
+                } else if (strongestMoves[0].power === move.power) {
+                    strongestMoves.push(move);
                 }
             }
         }
 
-        finalMoves['highSTAB'] = viableMoves;
+        for (const move of strongestMoves) {
+            selectedMoveNames.add(move.moveName);
+        }
+        return strongestMoves;
+    };
+    
+    if (format.includes('highSTAB')) {
+        finalMoves['highSTAB'] = getStrongestAvailableMoves(move => types.includes(move.type));
     }
 
     if (format.includes('midSTAB1')) {
-        let viableMoves = [];
         const type = types[0];
-
-        for (const atkFilter of atkFilters) {
-            const filterMoves = moves[atkFilter].filter(move => move.type === type && move.pp >= 15);
-
-            for (const move of filterMoves) {
-                if (viableMoves.length === 0) viableMoves.push(move);
-                else {
-                    if (viableMoves[0].power < move.power) {
-                        viableMoves = [];
-                        viableMoves.push(move);
-                    } else if (viableMoves[0].power === move.power) {
-                        viableMoves.push(move);
-                    }
-                }
-            }
-        }
-
-        finalMoves['midSTAB1'] = viableMoves;
+        finalMoves['midSTAB1'] = getStrongestAvailableMoves(move => move.type === type && move.pp >= 15);
     }
 
     if (format.includes('midSTAB2')) {
-        let viableMoves = [];
         const type = types[1];
-
-        for (const atkFilter of atkFilters) {
-            const filterMoves = moves[atkFilter].filter(move => move.type === type && move.pp >= 15);
-
-            for (const move of filterMoves) {
-                if (viableMoves.length === 0) viableMoves.push(move);
-                else {
-                    if (viableMoves[0].power < move.power) {
-                        viableMoves = [];
-                        viableMoves.push(move);
-                    } else if (viableMoves[0].power === move.power) {
-                        viableMoves.push(move);
-                    }
-                }
-            }
-        }
-
-        finalMoves['midSTAB2'] = viableMoves;
+        finalMoves['midSTAB2'] = getStrongestAvailableMoves(move => move.type === type && move.pp >= 15);
     }
 
     if (format.includes('coverage')) {
-        let viableMoves = [];
-
-        for (const atkFilter of atkFilters) {
-            const filterMoves = moves[atkFilter].filter(move => !types.includes(move.type) && move.pp >= 15 && move.power < 120);
-
-            for (const move of filterMoves) {
-                if (viableMoves.length === 0) viableMoves.push(move);
-                else {
-                    if (viableMoves[0].power < move.power) {
-                        viableMoves = [];
-                        viableMoves.push(move);
-                    } else if (viableMoves[0].power === move.power) {
-                        viableMoves.push(move);
-                    }
-                }
-            }
-        }
+        const viableMoves = getStrongestAvailableMoves(move =>
+            !types.includes(move.type) && move.pp >= 15 && move.power < 120
+        );
 
         viableMoves.sort((a, b) => {
             if (a.type === 'normal') return 1;
@@ -249,7 +205,12 @@ async function getFinalMoves(format, types, stats, moves) {
     }
 
     if (format.includes('status')) {
-        const filterMoves = moves['status'].filter(move => move.type === type && move.pp >= 15);
+        const filterMoves = moves['status'].filter(move =>
+            !selectedMoveNames.has(move.moveName) && types.includes(move.type) && move.pp >= 15
+        );
+        for (const move of filterMoves) {
+            selectedMoveNames.add(move.moveName);
+        }
         finalMoves['status'] = filterMoves;
     }
 
