@@ -3,16 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokemon Moves Lister</title>
-    <link rel="stylesheet" href='styles.css'>
+    <title>Pokémon Moves Generator</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <main>
-        <search class='btn-border-round'>
-            <input class='input' id='pokemon-name' type="text" placeholder="Enter Pokemon Name">
-            <button class='search-btn' id='get-moves-btn' type='button'>Get Moves</button>
-        </search>
+        <section class="app" aria-labelledby="page-title">
+            <header class="page-header">
+                <p class="eyebrow">Pokémon battle helper</p>
+                <h1 id="page-title">Moves Generator</h1>
+                <p class="intro">Find a moveset tailored to each Pokémon.</p>
+            </header>
+
+            <form class="search btn-border-round" id="pokemon-search">
+                <label class="sr-only" for="pokemon-name">Pokémon name</label>
+                <input class="input" id="pokemon-name" type="search" placeholder="Enter Pokémon name" required>
+                <button class="search-btn" id="get-moves-btn" type="submit">Get Moves</button>
+            </form>
+            <p class="status-message" id="status-message" role="status" aria-live="polite"></p>
+            <section class="results" id="results" aria-live="polite"></section>
+        </section>
     </main>
+    <script src="script.js"></script>
 </body>
-<script src='script.js'></script>
 </html>
